@@ -7,14 +7,14 @@ export type Article = {
   source: { name: string; url: string };
 };
 
-export async function getTopHeadlines(category = "general"): Promise<Article[]> {
-  const url =
-    `https://gnews.io/api/v4/top-headlines?category=${category}` +
-    `&lang=en&max=12&apikey=${process.env.GNEWS_API_KEY}`;
+const API = process.env.API_URL ?? "http://localhost:8000";
 
-  const res = await fetch(url, { next: { revalidate: 600 } }); // cache 10 min
-  if (!res.ok) throw new Error(`News API error: ${res.status}`);
+export async function getNews(opts: { category?: string; q?: string }): Promise<Article[]> {
+  const url = opts.q
+    ? `${API}/api/search?q=${encodeURIComponent(opts.q)}`
+    : `${API}/api/news?category=${opts.category ?? "general"}`;
 
-  const data = await res.json();
-  return data.articles;
+  const res = await fetch(url, { next: { revalidate: 600 } });
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.json();
 }
